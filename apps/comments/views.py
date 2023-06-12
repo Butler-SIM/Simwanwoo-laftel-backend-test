@@ -1,9 +1,14 @@
 from django.db.models import Prefetch, Count, Q
+from django.shortcuts import get_object_or_404
 from rest_framework import  viewsets, mixins
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.response import Response
+
 from apps.comments.models import Comment
-from apps.comments.schemas import CommentSchema
+from apps.comments.schemas import CommentSchema, LikeSchema
 from apps.comments.serializers import CommentSerializer, CommentCreateSerializer, CommentUpdateSerializer
 from common.permission import IsCommentAuthorOrReadOnly
 
@@ -29,6 +34,9 @@ class CommentViewSet(
         if self.action in ("update", "partial_update"):
             return CommentUpdateSerializer
 
+        if self.action in ("like", "un_like"):
+            return CommentCreateSerializer
+
         return CommentSerializer
 
     def get_permissions(self):
@@ -46,7 +54,6 @@ class CommentViewSet(
                 self.queryset.prefetch_related(
                     "user",
                 )
-
             ).annotate(
                 report_cnt=Count(
                     "report",
@@ -57,6 +64,10 @@ class CommentViewSet(
                     "report",
                     filter=Q(report__reason="SPOILER"),
                 )
+            ).annotate(
+                like_count=Count(
+                    "like", distinct=True
+                                 )
             ).exclude(
                 report_cnt__gte=3
             )
@@ -67,3 +78,45 @@ class CommentViewSet(
         return queryset
 
 
+@LikeSchema.article_like_schema
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def like_post(request, **kwargs):
+    comment = get_object_or_404(Comment, id=kwargs.get("id"))
+
+    if comment.like.filter(id=request.user.id).exists():
+        raise ValidationError(
+            {"already like": "a comment that has already clicked like"}
+        )
+
+    comment.like.add(request.user.id)
+
+    return Response(
+        {
+            "success": "like",
+            "comment_id": comment.id,
+        },
+        status=201,
+    )
+
+
+@LikeSchema.article_like_schema
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def like_delete(request, **kwargs):
+    comment = get_object_or_404(Comment, id=kwargs.get("id"))
+
+    if not comment.like.filter(id=request.user.id).exists():
+        raise ValidationError(
+            {"already delete like": "a comment that has already delete like"}
+        )
+
+    comment.like.remove(request.user.id)
+
+    return Response(
+        {
+            "success": "un_like",
+            "comment_id": comment.id,
+        },
+        status=204,
+    )

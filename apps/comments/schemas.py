@@ -60,4 +60,20 @@ class CommentSchema:
     )
 
 
+class LikeSchema:
+    tag = "'comments-like'"
+    article_like_schema = extend_schema(
+        tags=[tag],
+        summary=f"댓글 좋아요",
+        description="좋아요",
+    )
+    article_like_delete_schema = extend_schema(
+        tags=[tag],
+        summary=f"좋아요 삭제",
+        description="좋아요 삭제",
+    )
+
+    article_like_schema_view = extend_schema_view(
+        like_post=article_like_schema, like_delete=article_like_delete_schema
+    )
 

@@ -7,6 +7,7 @@ class CommentSerializer(serializers.ModelSerializer):
     report_cnt = serializers.IntegerField()
     spoiler_report_cnt = serializers.IntegerField()
     content = serializers.SerializerMethodField()
+    like_count = serializers.IntegerField()
 
     class Meta:
         model = Comment
@@ -16,21 +17,8 @@ class CommentSerializer(serializers.ModelSerializer):
             'content',
             'report_cnt',
             'spoiler_report_cnt',
+            'like_count',
         ]
-
-    # def get_content(self, obj):
-    #     """댓글 filter"""
-    #
-    #     if obj.user == self.context["request"].user:
-    #         return obj.content
-    #
-    #
-    #     print("obj.self.context.user", self.context["request"].user)
-    #     print("obj.content", obj.content)
-    #
-    #     print("obj.report cnt", obj.report_cnt)
-    #     print("obj.spoiler_report_cnt", obj.spoiler_report_cnt)
-    #     return obj.content
 
     def get_content(self, obj):
         request = self.context.get('request')
@@ -59,6 +47,16 @@ class CommentCreateSerializer(serializers.ModelSerializer):
 
 
 class CommentUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Comment
+        fields = [
+            'id',
+            'content',
+        ]
+
+
+class LikeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
