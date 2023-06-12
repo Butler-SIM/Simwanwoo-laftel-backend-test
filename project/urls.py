@@ -5,7 +5,10 @@ from drf_spectacular.views import SpectacularJSONAPIView, SpectacularYAMLAPIView
 from project import settings
 
 urlpatterns = [
+    path("reports/", include("apps.reports.urls")),
+    path("accounts/", include("apps.accounts.urls")),
     path("comments/", include("apps.comments.urls")),
+
 ]
 
 
