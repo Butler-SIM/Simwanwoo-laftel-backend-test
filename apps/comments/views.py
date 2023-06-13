@@ -1,6 +1,6 @@
 from django.db.models import Prefetch, Count, Q
 from django.shortcuts import get_object_or_404
-from rest_framework import  viewsets, mixins
+from rest_framework import viewsets, mixins, filters
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
@@ -23,9 +23,12 @@ class CommentViewSet(
 ):
     permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = CommentSerializer
-    queryset = Comment.objects.all().order_by("-id")
+    queryset = Comment.objects.all()
     pagination_class = PageNumberPagination
     filterset_fields = ["animation_id"]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["like_count", "id"]
+    ordering = ['-id']
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -33,9 +36,6 @@ class CommentViewSet(
 
         if self.action in ("update", "partial_update"):
             return CommentUpdateSerializer
-
-        if self.action in ("like", "un_like"):
-            return CommentCreateSerializer
 
         return CommentSerializer
 
@@ -50,6 +50,7 @@ class CommentViewSet(
         queryset = self.queryset
 
         if self.action == "list":
+
             queryset = (
                 self.queryset.prefetch_related(
                     "user",
@@ -72,8 +73,10 @@ class CommentViewSet(
                 report_cnt__gte=3
             )
 
-        if self.action in ("update", "partial_update"):
-            queryset = queryset.filter(state="ACTIVE")
+            # 추가: 내 댓글 보기
+            is_my_comments = self.request.query_params.get('my_comments', 'false')
+            if is_my_comments == 'true':
+                queryset = queryset.filter(user=self.request.user)
 
         return queryset
 

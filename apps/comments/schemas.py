@@ -25,6 +25,18 @@ class CommentSchema:
                 required=True,
                 type=int,
             ),
+            OpenApiParameter(
+                name="is_my_comments",
+                description="is_my_comments 내 댓글만 보기(true, false)",
+                required=False,
+                type=bool,
+            ),
+            OpenApiParameter(
+                name="ordering",
+                description="ordering_fields['like_count', 'id']",
+                required=False,
+                type=str,
+            ),
         ],
 
         responses=CommentSerializer,
