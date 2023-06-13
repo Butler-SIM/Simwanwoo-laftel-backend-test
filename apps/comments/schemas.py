@@ -33,7 +33,12 @@ class CommentSchema:
             ),
             OpenApiParameter(
                 name="ordering",
-                description="ordering_fields['like_count', 'id']",
+                description="""
+                ordering_fields['like_count', 'id']
+                좋아요 높은순 정렬 -like_count,
+                최신순 정렬 -id
+                반대인 경우 -를 제외 ex: id
+                """,
                 required=False,
                 type=str,
             ),
